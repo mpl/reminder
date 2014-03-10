@@ -65,6 +65,7 @@ func main() {
 			continue
 		}
 		// TODO: no hardcode, command as option
+		// TODO: do not run again if previous still running.
 		args := []string{
 			"-au",
 			"/home/mpl/mnt/serenity/var/camlistore/",
