@@ -19,7 +19,7 @@ const (
 var (
 	help     = flag.Bool("h", false, "show this help.")
 	host     = flag.String("host", "localhost:8080", "listening port and hostname.")
-	interval = flag.Int("interval", 10, "interval in minutes between checks")
+	interval = flag.Int("interval", 3600, "interval in seconds between checks")
 	testFile = flag.String("testfile", "~/mnt/serenity/.bashrc", "file to stat to determine is mount effective")
 )
 
@@ -55,13 +55,25 @@ func main() {
 	time.Sleep(2 * time.Second)
 
 	url := "http://" + *host
+	retryInterval := *interval / 10
 	for {
 		if !isMounted(*testFile) {
 			if err := exec.Command("xdg-open", url).Run(); err != nil {
 				log.Fatalf("Could not open url %v in browser: %v", url, err)
 			}
+			time.Sleep(time.Duration(retryInterval)*time.Second)
+			continue
 		}
-		time.Sleep(time.Duration(*interval) * time.Minute)
+		// TODO: no hardcode, command as option
+		args := []string{
+			"-au",
+			"/home/mpl/mnt/serenity/var/camlistore/",
+			"/home/mpl/var/camlistore-granivore/",
+		}
+		if err := exec.Command("rsync", args...).Run(); err != nil {
+			log.Fatalf("Could not rsync: %v", url, err)
+		}			
+		time.Sleep(time.Duration(*interval)*time.Second)
 	}
 }
 
