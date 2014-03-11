@@ -56,7 +56,12 @@ func main() {
 
 	url := "http://" + *host
 	retryInterval := *interval / 10
+	var args []string // declared early because of goto
+	running := false
 	for {
+		if running {
+			goto Sleep
+		}
 		if !isMounted(*testFile) {
 			if err := exec.Command("xdg-open", url).Run(); err != nil {
 				log.Fatalf("Could not open url %v in browser: %v", url, err)
@@ -65,15 +70,17 @@ func main() {
 			continue
 		}
 		// TODO: no hardcode, command as option
-		// TODO: do not run again if previous still running.
-		args := []string{
+		running = true
+		args = []string{
 			"-au",
 			"/home/mpl/mnt/serenity/var/camlistore/",
 			"/home/mpl/var/camlistore-granivore/",
 		}
 		if err := exec.Command("rsync", args...).Run(); err != nil {
 			log.Fatalf("Could not rsync: %v", url, err)
-		}			
+		}
+		running = false
+Sleep:		
 		time.Sleep(time.Duration(*interval)*time.Second)
 	}
 }
